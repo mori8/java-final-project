@@ -11,13 +11,17 @@ public class LabFinalProject extends JFrame {
     ItemCollections movieCollections = new ItemCollections();
     ItemCollections bookCollections = new ItemCollections();
 
-    Vector<String> movieTitles = movieCollections.getTitles();
-    Vector<String> bookTitles = bookCollections.getTitles();
     Vector<String> allTitles = new Vector<>();
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy년 MM월 dd일 hh:mm:ss");
     String formattedTime = format.format(System.currentTimeMillis());
     JLabel timeLabel = new JLabel(formattedTime);
+
+    JList<String> allTab = new JList<String>(allTitles);
+    JList<String> movieTab = new JList<String>();
+    JList<String> bookTab = new JList<String>();
+    JList<String> searchTab = new JList<String>(allTitles);
+
     // 현재 선택된 아이템
     Item selectedItem = null;
     // 포스터와 표지 정보 JLabel
@@ -33,7 +37,11 @@ public class LabFinalProject extends JFrame {
     JTextArea plotArea = new JTextArea();
     JTextArea opinionArea = new JTextArea();
 
-    JPanel dialogMainPanel = new JPanel();
+    JPanel movieMainPanel = new JPanel();
+    JPanel bookMainPanel = new JPanel();
+
+    // AddDialog에서 생성될 Item 객체의 타입
+    int itemType = 0; // 0: Movie / 1: Book
 
     public LabFinalProject() {
         // 타이틀 설정
@@ -57,7 +65,6 @@ public class LabFinalProject extends JFrame {
         upperPanel.add(BorderLayout.EAST, timeLabel);
         c.add(BorderLayout.NORTH, upperPanel);
 
-
         // CENTER - centerPanel: 전체/영화/도서/검색 + 추가 버튼
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(null);
@@ -68,27 +75,22 @@ public class LabFinalProject extends JFrame {
         subPanel.setSize(250, 600);
         subPanel.setLocation(0, 0);
 
-        allTitles.addAll(movieTitles);
-        allTitles.addAll(bookTitles);
-
-        JList<String> allTab = new JList<String>(allTitles);
+        // tabbedPane에 메뉴 달기
         tabbedPane.add("전체", allTab);
-        JList<String> movieTab = new JList<String>(movieTitles);
         tabbedPane.add("영화", movieTab);
-        JList<String> bookTab = new JList<String>(bookTitles);
         tabbedPane.add("도서", bookTab);
-        JList<String> searchTab = new JList<String>(allTitles);
         tabbedPane.add("검색", searchTab);
 
+        // TODO: 각 JList에서 아이템 선택했을 때 상세정보 띄우기
+        // ...
+
         // 버튼 가운데정렬을 위해 패널 생성
-        // TODO: 추가 버튼 눌렀을 때 입력 다이얼로그 팝업
         JPanel bottomPanel = new JPanel();
         JButton addButton = new JButton("추가");
         AddDialog addDialog = new AddDialog(this, "입력");
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO: 내용 작성
                 addDialog.setVisible(true);
             }
         });
@@ -113,25 +115,6 @@ public class LabFinalProject extends JFrame {
 
         imageLabel.setSize(150, 250);
         imageLabel.setLocation(0, 10);
-
-
-
-        // TODO: 이 부분은 이벤트리스너에 넣는게 맞는듯
-        if (selectedItem instanceof Movie) {
-
-
-            int gap = 20;
-            for (String s: movieInfos) {
-
-            }
-        } else if (selectedItem instanceof Book) {
-
-
-            int gap = 30;
-            for (String s: bookInfos) {
-
-            }
-        }
 
         // 줄거리
         JPanel plotPanel = new JPanel(new BorderLayout());
@@ -259,7 +242,8 @@ public class LabFinalProject extends JFrame {
     class AddDialog extends JDialog {
         public AddDialog(JFrame frame, String title) {
             super(frame, title);
-            this.setLayout(new BorderLayout());
+            Container c = getContentPane();
+            c.setLayout(new BorderLayout());
             // 버튼 그룹 생성
             ButtonGroup buttonGroup = new ButtonGroup();
             // RadioButton을 담을 패널 생성
@@ -269,8 +253,11 @@ public class LabFinalProject extends JFrame {
             JRadioButton[] radioButtons = new JRadioButton[2];
 
             // 메인 패널 생성
-            dialogMainPanel.setLayout(null);
-            dialogMainPanel.setBorder(BorderFactory.createTitledBorder("영화 정보"));
+            movieMainPanel.setLayout(null);
+            movieMainPanel.setBorder(BorderFactory.createTitledBorder("영화 정보"));
+
+            bookMainPanel.setLayout(null);
+            bookMainPanel.setBorder(BorderFactory.createTitledBorder("도서 정보"));
 
             Rectangle[] bounds = {
                     new Rectangle(80, 35, 230, 35),
@@ -296,79 +283,120 @@ public class LabFinalProject extends JFrame {
             };
 
             // 영화 탭에 라벨 추가
-            JLabel[] labels = new JLabel[10];
-            for (int j = 0; j < labels.length; j++) {
-                labels[j] = new JLabel(movieInfos[j]);
-                if (j >= labels.length - 2) {
-                    labels[j].setBounds(30, 315 + 80 * (j - 7), 50, 15);
-                    dialogMainPanel.add(labels[j]);
+            JLabel[] mLabels = new JLabel[10];
+            for (int j = 0; j < mLabels.length; j++) {
+                mLabels[j] = new JLabel(movieInfos[j]);
+                if (j >= mLabels.length - 2) {
+                    mLabels[j].setBounds(30, 315 + 80 * (j - 7), 50, 15);
+                    movieMainPanel.add(mLabels[j]);
                     continue;
                 }
-                labels[j].setBounds(30, 40 * (j + 1), 50, 15);
-                dialogMainPanel.add(labels[j]);
+                mLabels[j].setBounds(30, 40 * (j + 1), 50, 15);
+                movieMainPanel.add(mLabels[j]);
             }
-            // 텍스트필드, 콤보박스 생성
-            JTextField[] textFields = new JTextField[3];
-            JComboBox<String>[] comboBoxes = new JComboBox[3];
 
-            // textField 추가: 제목, 감독, 배우
-            for(int j = 0; j < 3; j++) {
-                textFields[j] = new JTextField();
-                textFields[j].setBounds(bounds[j]);
-                dialogMainPanel.add(textFields[j]);
+            // 책 탭에 라벨 추가
+            JLabel[] bLabels = new JLabel[8];
+            for (int j = 0; j < bLabels.length; j++) {
+                bLabels[j] = new JLabel(bookInfos[j]);
+                if (j >= bLabels.length - 2) {
+                    bLabels[j].setBounds(30, 235 + 80 * (j - 5), 50, 15);
+                    bookMainPanel.add(bLabels[j]);
+                    continue;
+                }
+                bLabels[j].setBounds(30, 40 * (j + 1), 50, 15);
+                bookMainPanel.add(bLabels[j]);
             }
+
             // comboBox에 들어갈 내용들
             String[][] comboboxContents = {
                     {"드라마", "로맨스", "스릴러", "판타지", "범죄", "코미디", "애니메이션"}, // 장르
                     {"전체 관람가", "12세 관람가", "15세 관람가", "청소년 관람불가"},   // 등급
                     {"2020", "2019", "2018", "2017", "2016", "2015", "2014", "2013", "2012", "2011"} // 개봉년도
             };
-            // comboBox 추가: 장르, 등급, 개봉년도
+
+            // 텍스트필드, 콤보박스 생성
+            JTextField[] mTextFields = new JTextField[3];
+            JComboBox<String>[] mComboBoxes = new JComboBox[3];
+
+            JTextField[] bTextFields = new JTextField[3];
+            JComboBox<String> bComboBox = new JComboBox<String>(comboboxContents[2]);
+
+            // 각 탭에 textField 추가
+            for(int j = 0; j < 3; j++) {
+                mTextFields[j] = new JTextField();
+                mTextFields[j].setBounds(bounds[j]);
+                movieMainPanel.add(mTextFields[j]);
+
+                bTextFields[j] = new JTextField();
+                bTextFields[j].setBounds(bounds[j]);
+                bookMainPanel.add(bTextFields[j]);
+            }
+
+            // 영화 탭에 comboBox 추가: 장르, 등급, 개봉년도
             for (int j = 3; j < 6; j++) {
-                comboBoxes[j - 3] = new JComboBox<String>(comboboxContents[j - 3]);
-                comboBoxes[j - 3].setBounds(bounds[j]);
-                dialogMainPanel.add(comboBoxes[j - 3]);
+                mComboBoxes[j - 3] = new JComboBox<String>(comboboxContents[j - 3]);
+                mComboBoxes[j - 3].setBounds(bounds[j]);
+                movieMainPanel.add(mComboBoxes[j - 3]);
             }
+            // 책 탭에 comboBox 추가: 출판년도
+            bComboBox.setBounds(bounds[3]);
+            bookMainPanel.add(bComboBox);
 
-            // 이미지 불러오기
-            JPanel imagePanel = new JPanel();
-            JTextField imagePath = new JTextField(10);
-            imagePath.setEnabled(false);
-            JButton getImageButton = new JButton("불러오기");
-            imagePanel.add(imagePath);
-            imagePanel.add(getImageButton);
-            imagePanel.setBounds(bounds[6]);
-            dialogMainPanel.add(imagePanel);
+            // 영화 이미지 불러오기
+            JPanel mImagePanel = new JPanel();
+            JTextField mImagePath = new JTextField(10);
+            mImagePath.setEnabled(false);
+            JButton getMovieImageButton = new JButton("불러오기");
+            mImagePanel.add(mImagePath);
+            mImagePanel.add(getMovieImageButton);
+            mImagePanel.setBounds(bounds[6]);
+            movieMainPanel.add(mImagePanel);
+            // 책 이미지 불러오기
+            JPanel bImagePanel = new JPanel();
+            JTextField bImagePath = new JTextField(10);
+            bImagePath.setEnabled(false);
+            JButton getBookImageButton = new JButton("불러오기");
+            bImagePanel.add(bImagePath);
+            bImagePanel.add(getBookImageButton);
+            bImagePanel.setBounds(bounds[4]);
+            bookMainPanel.add(bImagePanel);
 
-            // 별점
-            JSlider slider = new JSlider(JSlider.HORIZONTAL, 1, 10, 5);
-            slider.setPaintLabels(true);
-            slider.setPaintTicks(true);
-            slider.setPaintTrack(true);
-            slider.setMajorTickSpacing(1);
-            slider.setBounds(bounds[7]);
-            dialogMainPanel.add(slider);
+            // 영화 별점
+            JSlider mSlider = new JSlider(JSlider.HORIZONTAL, 1, 10, 5);
+            mSlider.setPaintLabels(true);
+            mSlider.setPaintTicks(true);
+            mSlider.setPaintTrack(true);
+            mSlider.setMajorTickSpacing(1);
+            mSlider.setBounds(bounds[7]);
+            movieMainPanel.add(mSlider);
+            // 책 별점
+            JSlider bSlider = new JSlider(JSlider.HORIZONTAL, 1, 10, 5);
+            bSlider.setPaintLabels(true);
+            bSlider.setPaintTicks(true);
+            bSlider.setPaintTrack(true);
+            bSlider.setMajorTickSpacing(1);
+            bSlider.setBounds(bounds[5]);
+            bookMainPanel.add(bSlider);
 
-            // textArea 추가: 줄거리와 감상평
-            JTextArea[] textAreas = new JTextArea[2];
-            JScrollPane[] scrollTextAreas = new JScrollPane[2];
+            // 영화 textArea 추가: 줄거리와 감상평
+            JTextArea[] mTextAreas = new JTextArea[2];
+            JScrollPane[] mScrollTextAreas = new JScrollPane[2];
             for (int j = 0; j < 2; j++) {
-                textAreas[j] = new JTextArea(5, 10);
-                scrollTextAreas[j] = new JScrollPane(textAreas[j]);
-                scrollTextAreas[j].setBounds(bounds[8 + j]);
-                dialogMainPanel.add(scrollTextAreas[j]);
+                mTextAreas[j] = new JTextArea(5, 10);
+                mScrollTextAreas[j] = new JScrollPane(mTextAreas[j]);
+                mScrollTextAreas[j].setBounds(bounds[8 + j]);
+                movieMainPanel.add(mScrollTextAreas[j]);
             }
-
-            // 모든 입력용 컴포넌트를 보관, 관리하는 allComponents 배열
-            JComponent[] allComponents = {
-                textFields[0], textFields[1], textFields[2],
-                comboBoxes[0], comboBoxes[1], comboBoxes[2],
-                imagePanel,
-                slider,
-                scrollTextAreas[0], scrollTextAreas[1]
-            };
-
-            dialogMainPanel.setBorder(BorderFactory.createTitledBorder("영화 정보"));
+            // 책 textArea 추가: 줄거리와 감상평
+            JTextArea[] bTextAreas = new JTextArea[2];
+            JScrollPane[] bScrollTextAreas = new JScrollPane[2];
+            for (int j = 0; j < 2; j++) {
+                bTextAreas[j] = new JTextArea(5, 10);
+                bScrollTextAreas[j] = new JScrollPane(bTextAreas[j]);
+                bScrollTextAreas[j].setBounds(bounds[10 + j]);
+                bookMainPanel.add(bScrollTextAreas[j]);
+            }
 
             // RadioButton에 이벤트 등록
             for (int i = 0; i < 2; i++) {
@@ -382,47 +410,18 @@ public class LabFinalProject extends JFrame {
                 radioButtons[i].addItemListener(new ItemListener() {
                     @Override
                     public void itemStateChanged(ItemEvent e) {
-                        if (e.getStateChange() == ItemEvent.DESELECTED) return;
+                        if (e.getStateChange() == ItemEvent.DESELECTED) ;
                         if (radioButtons[0].isSelected()) { // Movie
-                            // movie용 Label 추가
-                            for (int i = 0; i < movieInfos.length; i++) {
-                                labels[i].setText(movieInfos[i]);
-                                labels[i].setVisible(true);
-                            }
-                            for (int i = 0; i < 8; i++) {
-                                allComponents[i].setVisible(true);
-                                allComponents[i].setBounds(bounds[i]);
-                            }
-                            // 줄거리, 감상평 위치 조절
-                            for (int i = 0; i < 2; i++) {
-                                labels[bookInfos.length - 2 + i].setBounds(textAreaLabelBounds[i]);
-                                scrollTextAreas[i].setBounds(bounds[8 + i]);
-                            }
-                            dialogMainPanel.setBorder(BorderFactory.createTitledBorder("영화 정보"));
+                            itemType = 0;
+                            c.remove(bookMainPanel);
+                            c.add(BorderLayout.CENTER, movieMainPanel);
                         } else { // Book
-                            for (int i = 0; i < bookInfos.length + 2; i++) {
-                                if (i > bookInfos.length - 1) {
-                                    labels[i].setVisible(false);
-                                    continue;
-                                } else if (i >= bookInfos.length - 2) {
-                                    labels[i].setBounds(textAreaLabelBounds[i - bookInfos.length + 4]);
-                                }
-                                labels[i].setText(bookInfos[i]);
-                            }
-                            comboBoxes[2].setBounds(bounds[3]);
-                            imagePanel.setBounds(bounds[4]);
-                            slider.setBounds(bounds[5]);
-
-                            comboBoxes[0].setVisible(false);
-                            comboBoxes[1].setVisible(false);
-
-                            scrollTextAreas[0].setBounds(bounds[10]);
-                            scrollTextAreas[1].setBounds(bounds[11]);
-
-                            // TODO: isVisible()로 가시성 체크하고 참이면 배열에 집어넣으셈 -> 생성된 배열 정보로 객체 생성 후 저장!
-
-                            dialogMainPanel.setBorder(BorderFactory.createTitledBorder("도서 정보"));
+                            itemType = 1;
+                            c.remove(movieMainPanel);
+                            c.add(BorderLayout.CENTER, bookMainPanel);
                         }
+                        c.revalidate();
+                        c.repaint();
                     }
                 });
             }
@@ -430,11 +429,69 @@ public class LabFinalProject extends JFrame {
             // 다이얼로그에 추가
             this.add(BorderLayout.NORTH, radioButtonPanel);
 
-            this.add(BorderLayout.CENTER, dialogMainPanel);
+            this.add(BorderLayout.CENTER, movieMainPanel);
 
             // 하단 버튼 패널
             JPanel buttonPanel = new JPanel();
             JButton okButton = new JButton("OK");
+            okButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    // TODO: 생성된 배열 정보로 객체 생성 후 저장!
+                    if (itemType == 0) { // movie
+                        int idx = 0;
+                        String[] data = new String[10];
+
+                        for (JTextField tf: mTextFields) {
+                            data[idx++] = tf.getText();
+                        }
+                        for (JComboBox<String> c: mComboBoxes) {
+                            data[idx++] = Integer.toString(c.getSelectedIndex());
+                        }
+                        data[idx++] = mImagePath.getText();
+                        data[idx++] = Integer.toString(mSlider.getValue());
+                        for (JTextArea ta: mTextAreas) {
+                            data[idx++] = ta.getText();
+                        }
+
+                        Movie movie = new Movie(
+                                data[0], data[1], data[2], // 제목, 감독, 배우
+                                Integer.parseInt(data[3]), Integer.parseInt(data[4]), Integer.parseInt(data[5]), // 장르, 등급, 개봉년도
+                                data[6], Integer.parseInt(data[7]), // 포스터 저장경로, 별점
+                                data[8], data[9] // 줄거리, 감상평
+                        );
+                        movieCollections.add(movie);
+                        allTitles.add(movie.getTitle());
+                        movieTab.setListData(movieCollections.getTitles());
+
+                    } else if (itemType == 1) { // book
+                        int idx = 0;
+                        String[] data = new String[8];
+                        // TODO: Book 객체 저장 코드
+                        for (JTextField tf: bTextFields) {
+                            data[idx++] = tf.getText();
+                        }
+                        data[idx++] = Integer.toString(bComboBox.getSelectedIndex());
+                        data[idx++] = bImagePath.getText();
+                        data[idx++] = Integer.toString(bSlider.getValue());
+                        for (JTextArea ta: bTextAreas) {
+                            data[idx++] = ta.getText();
+                        }
+
+                        Book book = new Book(
+                                data[0], data[1], data[2], // 제목, 감독, 배우
+                                Integer.parseInt(data[3]), // 출판년도
+                                data[4], Integer.parseInt(data[5]), // 포스터 저장경로, 별점
+                                data[6], data[7] // 줄거리, 감상평
+                        );
+                        bookCollections.add(book);
+                        allTitles.add(book.getTitle());
+                        bookTab.setListData(bookCollections.getTitles());
+                    }
+                    allTab.setListData(allTitles);
+                    setVisible(false);
+                }
+            });
             buttonPanel.add(okButton);
             this.add(BorderLayout.SOUTH, buttonPanel);
             setSize(350, 650);

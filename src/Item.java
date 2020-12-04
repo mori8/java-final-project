@@ -1,13 +1,15 @@
 public class Item {
     private String title;
-    private String year;
+    private int year;
+    private String imagePath;
     private int stars;
     private String plot;
     private String opinion;
 
-    public Item(String title, String year, int stars, String plot, String opinion) {
+    public Item(String title, int year, String imagePath, int stars, String plot, String opinion) {
         this.title = title;
         this.year = year;
+        this.imagePath = imagePath;
         this.stars = stars;
         this.plot = plot;
         this.opinion = opinion;
@@ -21,12 +23,20 @@ public class Item {
         this.title = title;
     }
 
-    public String getYear() {
+    public int getYear() {
         return year;
     }
 
-    public void setYear(String year) {
+    public void setYear(int year) {
         this.year = year;
+    }
+
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 
     public int getStars() {
