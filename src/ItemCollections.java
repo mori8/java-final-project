@@ -1,5 +1,5 @@
 import java.io.Serializable;
-import java.util.Vector;
+import java.util.*;
 
 public class ItemCollections implements Serializable {
     Vector<Item> v = new Vector<>();
@@ -35,6 +35,26 @@ public class ItemCollections implements Serializable {
             }
         }
         return null;
+    }
+
+    public Vector<String> findAllByTitle(String keyword) {
+        Vector<String> titles = new Vector<>();
+        Iterator<Item> it = v.iterator();
+        while (it.hasNext()) {
+            String str = it.next().getTitle();
+            if (str.contains(keyword)) titles.add(str);
+        }
+        return titles;
+    }
+
+    public Vector<String> findAllByStars(int star) {
+        Vector<String> titles = new Vector<>();
+        Iterator<Item> it = v.iterator();
+        while (it.hasNext()) {
+            Item item = it.next();
+            if (item.getStars() >= star) titles.add(item.getTitle());
+        }
+        return titles;
     }
 
     public Movie findMovie(String title) {

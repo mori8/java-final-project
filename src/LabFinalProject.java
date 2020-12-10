@@ -20,6 +20,8 @@ public class LabFinalProject extends JFrame {
     JList<String> allTab = new JList<String>(allTitles);
     JList<String> movieTab = new JList<String>();
     JList<String> bookTab = new JList<String>();
+    JPanel searchPanel = new JPanel(new BorderLayout());
+    String[] searchType = {"제목", "별점"};
     JList<String> searchTab = new JList<String>(allTitles);
 
     // * centerPanel 안 mainPanel: Item 정보 출력
@@ -31,6 +33,7 @@ public class LabFinalProject extends JFrame {
 
     // 현재 선택된 아이템
     int nowSelectedIndex = -1;
+    int nowSelectedTabbedPane = -1;
 
     // 포스터와 표지 정보 JPanel
     ImagePanel imagePanel = new ImagePanel();
@@ -103,7 +106,18 @@ public class LabFinalProject extends JFrame {
         tabbedPane.add("전체", allTab);
         tabbedPane.add("영화", movieTab);
         tabbedPane.add("도서", bookTab);
-        tabbedPane.add("검색", searchTab);
+        // TODO: 검색 탭
+        searchPanel.add(BorderLayout.CENTER, searchTab);
+        JPanel searchUIPanel = new JPanel();
+        searchUIPanel.setLayout(new BorderLayout());
+        JComboBox<String> searchComboBox = new JComboBox<>(searchType);
+        JTextField searchKeyword = new JTextField(7);
+        JButton searchButton = new JButton("검색");
+        searchUIPanel.add(BorderLayout.WEST, searchComboBox);
+        searchUIPanel.add(BorderLayout.CENTER, searchKeyword);
+        searchUIPanel.add(BorderLayout.EAST, searchButton);
+        searchPanel.add(BorderLayout.NORTH, searchUIPanel);
+        tabbedPane.add("검색", searchPanel);
 
         // mainPanel 안 infoPanel: 자유배치, 영화나 도서에 대한 상세 정보 출력
         infoPanel.setLayout(null);
@@ -142,7 +156,8 @@ public class LabFinalProject extends JFrame {
         allTab.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                // 선택한 list element의 내용을 name에 저장, index는 nowEditingIndex에 저장
+                // 선택한 list element의 내용을 name에 저장, index는 nowSelectedIndex에 저장
+                nowSelectedTabbedPane = 0;
                 String name = (String) allTab.getSelectedValue();
                 nowSelectedIndex = allTab.getSelectedIndex();
                 if (nowSelectedIndex == -1) return;
@@ -162,6 +177,7 @@ public class LabFinalProject extends JFrame {
         movieTab.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
+                nowSelectedTabbedPane = 1;
                 // 선택한 list element의 내용을 name에 저장
                 String name = (String) movieTab.getSelectedValue();
                 Movie movie = (Movie) allItemCollections.findMovie(name);
@@ -174,6 +190,7 @@ public class LabFinalProject extends JFrame {
         bookTab.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
+                nowSelectedTabbedPane = 2;
                 // 선택한 list element의 내용을 name에 저장
                 String name = (String) bookTab.getSelectedValue();
                 Book book = (Book) allItemCollections.findBook(name);
@@ -230,6 +247,20 @@ public class LabFinalProject extends JFrame {
         JPanel bottomButtonsPanel = new JPanel();
         JButton modifyButton = new JButton("수정");
         JButton deleteButton = new JButton("삭제");
+        // TODO: 수정 기능 구현
+        modifyButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        // TODO: 삭제 기능 구현
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
 
         bottomButtonsPanel.add(modifyButton);
         bottomButtonsPanel.add(deleteButton);
