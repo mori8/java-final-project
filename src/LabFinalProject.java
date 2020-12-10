@@ -1,16 +1,16 @@
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.*;
 import java.awt.event.*;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Vector;
 
 public class LabFinalProject extends JFrame {
     Container c = getContentPane();
 
-    ItemCollections movieCollections = new ItemCollections();
-    ItemCollections bookCollections = new ItemCollections();
-
+    ItemCollections allItemCollections = new ItemCollections();
     Vector<String> allTitles = new Vector<>();
 
     SimpleDateFormat format = new SimpleDateFormat("yyyy년 MM월 dd일 hh:mm:ss");
@@ -22,16 +22,30 @@ public class LabFinalProject extends JFrame {
     JList<String> bookTab = new JList<String>();
     JList<String> searchTab = new JList<String>(allTitles);
 
+    // * centerPanel 안 mainPanel: Item 정보 출력
+    JPanel mainPanel = new JPanel(new BorderLayout());
+    JPanel infoPanel = new JPanel();
+    JPanel detailInfoPanel = new JPanel();
+    JPanel movieInfoPanel = new JPanel();
+    JPanel bookInfoPanel = new JPanel();
+
     // 현재 선택된 아이템
-    Item selectedItem = null;
-    // 포스터와 표지 정보 JLabel
-    JLabel imageLabel = new JLabel();
+    int nowSelectedIndex = -1;
+
+    // 포스터와 표지 정보 JPanel
+    ImagePanel imagePanel = new ImagePanel();
     // 각각 영화/책 정보를 담을 JLabel 배열
-    JLabel[] movieInfoLabels = new JLabel[7];
-    JLabel[] bookInfoLabels = new JLabel[5];
-    // 각각 영화/책의 세부 정보
+    JLabel[] movieInfoLabels = new JLabel[7]; // 제목, 감독, 배우 등...
+    JLabel[] bookInfoLabels = new JLabel[5];  // 제목, 저자, 출판사 등...
+    JLabel[] movieItemInfoLabels = new JLabel[7]; // 각 항목에 해당하는 아이템의 내용
+    JLabel[] bookItemInfoLabels = new JLabel[5];
+
+    // 각각 영화/책의 정보
     String[] movieInfos = {"제목", "감독", "배우", "장르", "등급", "개봉년도", "포스터", "별점", "줄거리", "감상평"};
     String[] bookInfos = {"제목", "저자", "출판사", "출판년도", "책이미지", "별점", "줄거리", "감상평"};
+
+    String[] movieDetailInfos = {"제목", "감독", "배우", "장르", "등급", "개봉년도", "별점"};
+    String[] bookDetailInfos = {"제목", "저자", "출판사", "출판년도", "별점"};
 
     // 줄거리와 감상평 JTextArea
     JTextArea plotArea = new JTextArea();
@@ -39,9 +53,19 @@ public class LabFinalProject extends JFrame {
 
     JPanel movieMainPanel = new JPanel();
     JPanel bookMainPanel = new JPanel();
+    // 저장할 영화/책의 이미지 주소
+    JTextField mImagePath = new JTextField(10);
+    JTextField bImagePath = new JTextField(10);
 
     // AddDialog에서 생성될 Item 객체의 타입
     int itemType = 0; // 0: Movie / 1: Book
+
+    // comboBox에 들어갈 내용들
+    String[][] comboboxContents = {
+            {"드라마", "로맨스", "스릴러", "판타지", "범죄", "코미디", "애니메이션"}, // 장르
+            {"전체 관람가", "12세 관람가", "15세 관람가", "청소년 관람불가"},   // 등급
+            {"2020", "2019", "2018", "2017", "2016", "2015", "2014", "2013", "2012", "2011"} // 개봉년도
+    };
 
     public LabFinalProject() {
         // 타이틀 설정
@@ -57,7 +81,7 @@ public class LabFinalProject extends JFrame {
         JLabel titleLabel = new JLabel("My Notes");
         titleLabel.setFont(new Font(titleLabel.getFont().getFontName(), Font.BOLD + Font.ITALIC, 25));
         titleLabel.setForeground(Color.BLUE);
-
+        // 타이머 스레드
         TimerThread timerThread = new TimerThread();
         timerThread.start();
 
@@ -81,8 +105,83 @@ public class LabFinalProject extends JFrame {
         tabbedPane.add("도서", bookTab);
         tabbedPane.add("검색", searchTab);
 
+        // mainPanel 안 infoPanel: 자유배치, 영화나 도서에 대한 상세 정보 출력
+        infoPanel.setLayout(null);
+        // 테두리와 제목, 위치와 크기 설정
+        Border infoBorder = BorderFactory.createTitledBorder("상세 보기");
+        infoPanel.setBorder(infoBorder);
+        // 영화를 선택했을 때 상세정보 UI
+        int movieGap = 38;
+        movieInfoPanel.setLayout(null);
+        for (int i = 0; i < 7; i++) {
+            movieInfoLabels[i] = new JLabel(movieDetailInfos[i]);
+            movieInfoLabels[i].setBounds(0, 20 + movieGap * i, 50, 15);
+            movieItemInfoLabels[i] = new JLabel();
+            movieItemInfoLabels[i].setBounds(70, 20 + movieGap * i, 180, 15);
+            movieInfoPanel.add(movieInfoLabels[i]);
+            movieInfoPanel.add(movieItemInfoLabels[i]);
+        }
+        // 책을 선택했을 때의 상세정보 UI
+        int bookGap = 55;
+        bookInfoPanel.setLayout(null);
+        for (int i = 0; i < 5; i++) {
+            bookInfoLabels[i] = new JLabel(bookDetailInfos[i]);
+            bookInfoLabels[i].setBounds(0, 20 + bookGap * i, 50, 15);
+            bookItemInfoLabels[i] = new JLabel();
+            bookItemInfoLabels[i].setBounds(70, 20 + bookGap * i, 180, 15);
+            bookInfoPanel.add(bookInfoLabels[i]);
+            bookInfoPanel.add(bookItemInfoLabels[i]);
+        }
+
+        detailInfoPanel.setLayout(new BorderLayout());
+        detailInfoPanel.setBounds(210, 8, 350, 270);
+        infoPanel.add(detailInfoPanel);
+
         // TODO: 각 JList에서 아이템 선택했을 때 상세정보 띄우기
-        // ...
+        // list에서 선택한 element의 내용이 하단 텍스트필드에 뜨도록 함
+        allTab.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                // 선택한 list element의 내용을 name에 저장, index는 nowEditingIndex에 저장
+                String name = (String) allTab.getSelectedValue();
+                nowSelectedIndex = allTab.getSelectedIndex();
+                if (nowSelectedIndex == -1) return;
+                Item selectedItem = allItemCollections.findByIndex(nowSelectedIndex);
+                if (selectedItem instanceof Movie) {
+                    Movie movie = (Movie) allItemCollections.findMovie(name);
+                    movieView(movie);
+                } else if (selectedItem instanceof Book) {
+                    Book book = (Book) allItemCollections.findBook(name);
+                    bookView(book);
+                }
+                infoPanel.revalidate();
+                infoPanel.repaint();
+            }
+        });
+
+        movieTab.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                // 선택한 list element의 내용을 name에 저장
+                String name = (String) movieTab.getSelectedValue();
+                Movie movie = (Movie) allItemCollections.findMovie(name);
+                movieView(movie);
+                infoPanel.revalidate();
+                infoPanel.repaint();
+            }
+        });
+
+        bookTab.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                // 선택한 list element의 내용을 name에 저장
+                String name = (String) bookTab.getSelectedValue();
+                Book book = (Book) allItemCollections.findBook(name);
+                bookView(book);
+                infoPanel.revalidate();
+                infoPanel.repaint();
+            }
+        });
 
         // 버튼 가운데정렬을 위해 패널 생성
         JPanel bottomPanel = new JPanel();
@@ -100,21 +199,16 @@ public class LabFinalProject extends JFrame {
         subPanel.add(BorderLayout.SOUTH, bottomPanel);
         centerPanel.add(subPanel);
 
-        // * centerPanel 안 mainPanel: Item 정보 출력
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        JPanel infoPanel = new JPanel();
         mainPanel.setSize(650, 600);
         mainPanel.setLocation(250, 0);
 
-        // mainPanel 안 infoPanel: 자유배치, 영화나 도서에 대한 상세 정보 출력
-        infoPanel.setLayout(null);
-        // 테두리와 제목, 위치와 크기 설정
-        Border infoBorder = BorderFactory.createTitledBorder("상세 보기");
-        infoPanel.setBorder(infoBorder);
         // 상세 정보 출력
 
-        imageLabel.setSize(150, 250);
-        imageLabel.setLocation(0, 10);
+        imagePanel.setSize(180, 250);
+        imagePanel.setLocation(20, 20);
+
+        infoPanel.add(imagePanel);
+
 
         // 줄거리
         JPanel plotPanel = new JPanel(new BorderLayout());
@@ -150,14 +244,44 @@ public class LabFinalProject extends JFrame {
 
         c.add(BorderLayout.CENTER, centerPanel);
 
-
-
-
-
         // 프레임 사이즈 설정
         setSize(900, 680);
         // 화면에 프레임 출력
         setVisible(true);
+    }
+    // TODO: 상세 보기에 영화와 책 정보 표시하기
+    private void movieView(Movie movie) {
+        if (movie == null) return ;
+        // 라벨 배치
+        // "제목", "감독", "배우", "장르", "등급", "개봉년도", "별점"
+        movieItemInfoLabels[0].setText(movie.getTitle());
+        movieItemInfoLabels[1].setText(movie.getDirector());
+        movieItemInfoLabels[2].setText(movie.getActors());
+        movieItemInfoLabels[3].setText(comboboxContents[0][movie.getGenre()]);
+        movieItemInfoLabels[4].setText(comboboxContents[1][movie.getGrade()]);
+        movieItemInfoLabels[5].setText(comboboxContents[2][movie.getYear()]);
+        movieItemInfoLabels[6].setText(movie.getStars() + "점");
+        imagePanel.setItemPath(movie.getImagePath());
+        plotArea.setText(movie.getPlot());
+        opinionArea.setText(movie.getOpinion());
+        detailInfoPanel.remove(bookInfoPanel);
+        detailInfoPanel.add(BorderLayout.CENTER, movieInfoPanel);
+    }
+
+    private void bookView(Book book) {
+        if (book == null) return ;
+        // 라벨 배치
+        // "제목", "저자", "출판사", "출판년도", "별점"
+        bookItemInfoLabels[0].setText(book.getTitle());
+        bookItemInfoLabels[1].setText(book.getAuthor());
+        bookItemInfoLabels[2].setText(book.getPublisher());
+        bookItemInfoLabels[3].setText(comboboxContents[2][book.getYear()]);
+        bookItemInfoLabels[4].setText(book.getStars() + "점");
+        imagePanel.setItemPath(book.getImagePath());
+        plotArea.setText(book.getPlot());
+        opinionArea.setText(book.getOpinion());
+        detailInfoPanel.remove(movieInfoPanel);
+        detailInfoPanel.add(BorderLayout.CENTER, bookInfoPanel);
     }
 
     private void createMenu() { // 메뉴 생성
@@ -202,11 +326,30 @@ public class LabFinalProject extends JFrame {
             switch (cmd) {
                 case "불러오기": // 파일 열기 다이얼로그 이용
                     int ret1 = chooser.showOpenDialog(null);
+                    if (ret1 != JFileChooser.APPROVE_OPTION) break;
                     String filePath1 = chooser.getSelectedFile().getPath();
+                    try {
+                        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath1));
+                        allItemCollections = (ItemCollections) ois.readObject();
+                        movieTab.setListData(allItemCollections.getMovieTitles());
+                        bookTab.setListData(allItemCollections.getBookTitles());
+                        allTab.setListData(allItemCollections.getTitles());
+                        ois.close();
+                    } catch (Exception exception) {
+                        System.out.println(exception);
+                    }
                     break;
                 case "저장하기": // 파일 저장 다이얼로그 이용
                     int ret2 = chooser.showSaveDialog(null);
+                    if (ret2 != JFileChooser.APPROVE_OPTION) break;
                     String filePath2 = chooser.getSelectedFile().getPath();
+                    try {
+                        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath2));
+                        oos.writeObject(allItemCollections);
+                        oos.close();
+                    } catch (Exception exception) {
+                        System.out.println(exception);
+                    }
                     break;
                 case "종료": // 컨펌 다이얼로그 이용
                     int result = JOptionPane.showConfirmDialog(null, "종료하시겠습니까?", "종료 확인", JOptionPane.YES_NO_OPTION);
@@ -238,7 +381,6 @@ public class LabFinalProject extends JFrame {
     }
 
     // 추가 버튼 클릭시 팝업될 다이얼로그
-    // TODO: Dialog
     class AddDialog extends JDialog {
         public AddDialog(JFrame frame, String title) {
             super(frame, title);
@@ -308,13 +450,6 @@ public class LabFinalProject extends JFrame {
                 bookMainPanel.add(bLabels[j]);
             }
 
-            // comboBox에 들어갈 내용들
-            String[][] comboboxContents = {
-                    {"드라마", "로맨스", "스릴러", "판타지", "범죄", "코미디", "애니메이션"}, // 장르
-                    {"전체 관람가", "12세 관람가", "15세 관람가", "청소년 관람불가"},   // 등급
-                    {"2020", "2019", "2018", "2017", "2016", "2015", "2014", "2013", "2012", "2011"} // 개봉년도
-            };
-
             // 텍스트필드, 콤보박스 생성
             JTextField[] mTextFields = new JTextField[3];
             JComboBox<String>[] mComboBoxes = new JComboBox[3];
@@ -345,18 +480,19 @@ public class LabFinalProject extends JFrame {
 
             // 영화 이미지 불러오기
             JPanel mImagePanel = new JPanel();
-            JTextField mImagePath = new JTextField(10);
             mImagePath.setEnabled(false);
             JButton getMovieImageButton = new JButton("불러오기");
+            getMovieImageButton.addActionListener(new FileOpenActionListener());
             mImagePanel.add(mImagePath);
             mImagePanel.add(getMovieImageButton);
             mImagePanel.setBounds(bounds[6]);
             movieMainPanel.add(mImagePanel);
+
             // 책 이미지 불러오기
             JPanel bImagePanel = new JPanel();
-            JTextField bImagePath = new JTextField(10);
             bImagePath.setEnabled(false);
             JButton getBookImageButton = new JButton("불러오기");
+            getBookImageButton.addActionListener(new FileOpenActionListener());
             bImagePanel.add(bImagePath);
             bImagePanel.add(getBookImageButton);
             bImagePanel.setBounds(bounds[4]);
@@ -437,7 +573,6 @@ public class LabFinalProject extends JFrame {
             okButton.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    // TODO: 생성된 배열 정보로 객체 생성 후 저장!
                     if (itemType == 0) { // movie
                         int idx = 0;
                         String[] data = new String[10];
@@ -460,9 +595,9 @@ public class LabFinalProject extends JFrame {
                                 data[6], Integer.parseInt(data[7]), // 포스터 저장경로, 별점
                                 data[8], data[9] // 줄거리, 감상평
                         );
-                        movieCollections.add(movie);
+                        allItemCollections.add(movie);
                         allTitles.add(movie.getTitle());
-                        movieTab.setListData(movieCollections.getTitles());
+                        movieTab.setListData(allItemCollections.getMovieTitles());
 
                     } else if (itemType == 1) { // book
                         int idx = 0;
@@ -484,9 +619,9 @@ public class LabFinalProject extends JFrame {
                                 data[4], Integer.parseInt(data[5]), // 포스터 저장경로, 별점
                                 data[6], data[7] // 줄거리, 감상평
                         );
-                        bookCollections.add(book);
+                        allItemCollections.add(book);
                         allTitles.add(book.getTitle());
-                        bookTab.setListData(bookCollections.getTitles());
+                        bookTab.setListData(allItemCollections.getBookTitles());
                     }
                     allTab.setListData(allTitles);
                     setVisible(false);
@@ -495,6 +630,39 @@ public class LabFinalProject extends JFrame {
             buttonPanel.add(okButton);
             this.add(BorderLayout.SOUTH, buttonPanel);
             setSize(350, 650);
+        }
+    }
+
+    class FileOpenActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JFileChooser chooser = new JFileChooser();
+            int ret = chooser.showOpenDialog(null);
+            String filePath = chooser.getSelectedFile().getPath();
+            if (itemType == 0) { // movie
+                mImagePath.setText(filePath);
+            } else { // book
+                bImagePath.setText(filePath);
+            }
+        }
+    }
+
+    class ImagePanel extends JPanel {
+        private String path;
+
+        public void setItemPath(String path) {
+            this.path = path;
+        }
+
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            ImageIcon imgIcon = new ImageIcon(path);
+            Image img = imgIcon.getImage();
+            g.setColor(Color.GRAY);
+            g.drawLine(0, 0, 180, 250);
+            g.drawLine(180, 0, 0, 250);
+            g.drawString("이미지 없음", 62, 130);
+            g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
         }
     }
 

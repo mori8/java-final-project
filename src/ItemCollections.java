@@ -1,6 +1,7 @@
+import java.io.Serializable;
 import java.util.Vector;
 
-public class ItemCollections {
+public class ItemCollections implements Serializable {
     Vector<Item> v = new Vector<>();
 
     // add(): 컬렉션에 item 추가
@@ -36,10 +37,50 @@ public class ItemCollections {
         return null;
     }
 
+    public Movie findMovie(String title) {
+        for (Item i: v) {
+            if (i.getTitle().equals(title) && i instanceof Movie) {
+                return (Movie) i;
+            }
+        }
+        return null;
+    }
+
+    public Book findBook(String title) {
+        for (Item i: v) {
+            if (i.getTitle().equals(title) && i instanceof Book) {
+                return (Book) i;
+            }
+        }
+        return null;
+    }
+
+    public Item findByIndex(int index) {
+        return v.elementAt(index);
+    }
+
     public Vector<String> getTitles() {
         Vector<String> titles = new Vector<>();
         for (Item i: v) {
             titles.add(i.getTitle());
+        }
+        return titles;
+    }
+
+    public Vector<String> getMovieTitles() {
+        Vector<String> titles = new Vector<>();
+        for (Item i: v) {
+            if (i instanceof Movie)
+                titles.add(i.getTitle());
+        }
+        return titles;
+    }
+
+    public Vector<String> getBookTitles() {
+        Vector<String> titles = new Vector<>();
+        for (Item i: v) {
+            if (i instanceof Book)
+                titles.add(i.getTitle());
         }
         return titles;
     }
