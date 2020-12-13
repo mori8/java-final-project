@@ -9,52 +9,58 @@ public class ItemCollections implements Serializable {
         v.add(item);
     }
 
-    // modify(): title을 제목으로 가진 객체를 item으로 수정
-    public void modify(String title, Item item) {
-        Item target = find(title);
-        if (target != null) {
-            int idx = v.indexOf(target);
-            v.set(idx, item);
-        }
+    public void set(int index, Item item) {
+        v.set(index, item);
     }
 
     // delete(): title을 제목으로 가진 객체를 삭제
-    public void delete(String title) {
-        Item target = find(title);
-        if (target != null) {
-            int idx = v.indexOf(target);
-            v.remove(idx);
-        }
+    public void delete(Item item) {
+        v.remove(item);
     }
 
-    // find(): title을 제목으로 가진 객체를 리턴
-    public Item find(String title) {
-        for (Item i: v) {
-            if (i.getTitle().equals(title)) {
-                return i;
-            }
-        }
-        return null;
+    public int indexOf(Item item) {
+        return v.indexOf(item);
     }
 
+    // 제목으로 검색했을 때 해당하는 객체의 제목들을 벡터 타입으로 리턴
     public Vector<String> findAllByTitle(String keyword) {
         Vector<String> titles = new Vector<>();
-        Iterator<Item> it = v.iterator();
+        Iterator<Item> it = findAllItemsByTitle(keyword).iterator();
         while (it.hasNext()) {
             String str = it.next().getTitle();
             if (str.contains(keyword)) titles.add(str);
         }
         return titles;
     }
-
+    // 제목으로 검색했을 때 해당하는 객체들을 벡터 타입으로 리턴
+    public Vector<Item> findAllItemsByTitle(String keyword) {
+        Vector<Item> items = new Vector<>();
+        Iterator<Item> it = v.iterator();
+        while (it.hasNext()) {
+            Item i = it.next();
+            if (i.getTitle().contains(keyword)) items.add(i);
+        }
+        return items;
+    }
+    // 별점으로 검색했을 때 해당하는 객체들의 제목을 벡터 타입으로 리턴
     public Vector<String> findAllByStars(int star) {
         Vector<String> titles = new Vector<>();
-        Iterator<Item> it = v.iterator();
+        Iterator<Item> it = findAllItemByStars(star).iterator();
         while (it.hasNext()) {
             Item item = it.next();
             if (item.getStars() >= star) titles.add(item.getTitle());
         }
         return titles;
+    }
+    // 별점으로 검색했을 때 해당하는 객체들을 벡터 타입으로 리턴
+    public Vector<Item> findAllItemByStars(int star) {
+        Vector<Item> items = new Vector<>();
+        Iterator<Item> it = v.iterator();
+        while (it.hasNext()) {
+            Item i = it.next();
+            if (i.getStars() >= star) items.add(i);
+        }
+        return items;
     }
 
     public Movie findMovie(String title) {
