@@ -95,7 +95,7 @@ public class LabFinalProject extends JFrame {
 
     public LabFinalProject() {
         // 타이틀 설정
-        setTitle("JAVA 002 1914266 남수연");
+        setTitle("JAVA 004 1914266 남수연");
         // x 버튼을 누르면 프로그램이 종료되도록 함
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         c.setLayout(new BorderLayout());
